@@ -1,4 +1,4 @@
-# Provision a Google Cloud GCP GKE Autopilot Cluster and use external secrets
+# Provision a Google Cloud GCP GKE Autopilot Cluster with Kong Real IPs using external secrets
 
 Demonstration of using kubernetes external secrets with Google Secret Manager. Based on the external-secrets.io [documentation](https://external-secrets.io/v0.8.3/provider/google-secrets-manager/)
 
