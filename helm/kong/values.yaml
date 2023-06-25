@@ -1,0 +1,71 @@
+image:
+  repository: kong/kong-gateway
+
+env:
+  headers: "off"
+  ssl_cert: /etc/secrets/kong-proxy-tls/tls.crt
+  ssl_cert_key: /etc/secrets/kong-proxy-tls/tls.key
+  
+secretVolumes:
+- kong-proxy-tls
+
+podAnnotations:
+  prometheus.io/scrape: "true" # Ask Prometheus to scrape the
+  prometheus.io/port: "8100"   # Kong pods for metrics
+
+autoscaling:
+  enabled: true
+  minReplicas: ${kong_min_replicas}
+  maxReplicas: ${kong_max_replicas}
+  # targetCPUUtilizationPercentage only used if the cluster doesn't support autoscaling/v2beta
+  targetCPUUtilizationPercentage:
+  # Otherwise for clusters that do support autoscaling/v2beta, use metrics
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+resources:
+  limits:
+    cpu: 500m
+  requests:
+    cpu: 250m
+
+proxy:
+  externalTrafficPolicy: Local
+  loadBalancerIP: ${kong_global_ip_address}
+  enabled: true
+  type: LoadBalancer
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.allow-http: "false"
+    
+  http:
+    # Enable plaintext HTTP listen for the proxy
+    enabled: true
+    servicePort: 80
+    containerPort: 8000
+    # Set a nodePort which is available if service type is NodePort
+    # nodePort: 32080
+    # Additional listen parameters, e.g. "reuseport", "backlog=16384"
+    parameters: []
+  tls:
+    enabled: true
+    servicePort: 443
+    # overrideServiceTargetPort: 8000
+    containerPort: 8443
+    parameters:
+    - http2
+
+ingressController:  # enable Kong as an Ingress controller
+  ingressClass: kong
+  enabled: true
+  installCRDs: false
+  resources:
+    limits:
+      cpu: 100m
+    requests:
+      cpu: 50m
